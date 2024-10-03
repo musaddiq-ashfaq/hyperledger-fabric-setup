@@ -57,3 +57,155 @@ Download Fabric samples, binaries, and Docker images
 ```bash
 curl -sSL https://raw.githubusercontent.com/hyperledger/fabric/main/scripts/bootstrap.sh | bash -s
 ```
+
+# React and Go App Setup #
+
+## React Setup
+1. Folder Structure Setup
+   ```bash
+    cd ~/hyperledger-fabric/fabric-samples
+    mkdir my-app
+    cd my-app
+    ```
+2. Initialize the React Frontend
+   ```bash
+    npx create-react-app frontend
+    cd frontend
+    ```
+   To install dependencies required for making API requests:
+
+   ```bash
+   npm install axios
+   ```
+3. Navigate to src folder
+    ```bash
+    cd src
+    ```
+4. Open ***App.js*** file and write the following code in the file
+   ```bash
+   import React from 'react';
+    import axios from 'axios';
+
+    function App() {
+        const handleClick = async () => {
+            try {
+            const response = await axios.get('http://localhost:8080/api');
+            console.log(response.data);
+            } catch (error) {
+            console.error('Error making request:', error);
+            }
+        };
+
+        return (
+            <div className="App">
+            <h1>React + Go Backend</h1>
+            <button onClick={handleClick}>Click Me</button>
+            </div>
+        );
+    }
+
+    export default App;
+    ```
+5. Run the React Frontend
+   ```bash
+   npm start
+   ```
+   This will serve your React app at http://localhost:3000.
+
+
+## Go Setup ##
+
+1. Navigate back to the my-app folder and create a backend directory for the Go server:
+
+    ```bash
+    cd ..
+    mkdir backend
+    cd backend
+    ```
+2. Initialize the Go module:
+   ```bash
+   go mod init my-app/backend
+    ```
+3. Create file and Write the Go Backend Code:
+    ```bash
+    touch main.go
+    ```
+   Open the file and write the following code:
+   ```bash
+   package main
+
+    import (
+        "fmt"
+        "log"
+        "net/http"
+    )
+
+    func handleRequest(w http.ResponseWriter, r *http.Request) {
+        fmt.Println("Button clicked, request received!")
+        w.Write([]byte("Backend response: Success!"))
+    }
+
+    func main() {
+        http.HandleFunc("/api", handleRequest)
+        fmt.Println("Backend running at http://localhost:8080")
+        log.Fatal(http.ListenAndServe(":8080", nil))
+    } 
+    ```
+    
+4. Run the Go Backend
+    ```bash
+    go run main.go
+    ```
+    This will start your Go backend at http://localhost:8080.
+
+
+Click the "Click Me" button.
+If successful, you should see the message “Button clicked, request received!” printed in your terminal where the Go server is running.
+
+### Errors ###
+If you see any cors issues you can do the following:
+
+1. In your Go backend directory, run:
+    ```bash
+    go get github.com/rs/cors
+    ```
+
+2. Update Your Go Code in main.go:
+   ```bash
+   package main
+
+    import (
+        "fmt"
+        "log"
+        "net/http"
+        "github.com/rs/cors"
+    )
+
+    func handleRequest(w http.ResponseWriter, r *http.Request) {
+        fmt.Println("Button clicked, request received!")
+        w.Write([]byte("Backend response: Success!"))
+    }
+
+    func main() {
+        mux := http.NewServeMux()
+        mux.HandleFunc("/api", handleRequest)
+
+        // Enable CORS for all origins
+        c := cors.New(cors.Options{
+            AllowedOrigins:   []string{"*"},
+            AllowCredentials: true,
+        })
+
+        handler := c.Handler(mux)
+        fmt.Println("Backend running at http://localhost:8080")
+        log.Fatal(http.ListenAndServe(":8080", handler))
+    }
+    ```
+3. Run again:
+   ```bash
+   go run main.go
+    ```
+
+Hopefully, this will resolve those errors. 
+
+   
